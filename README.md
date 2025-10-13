@@ -26,13 +26,13 @@ UE plugin to disable AsyncCompute while editor map load, intended to avoid GPU C
 - Double-click at `Content/Hillside/Maps/LV_Exterior`.
 - Confirm UE editor crashes. (If not, you don't need this plugin)
 
-# How to use thie plugin for UE editor
+# How to use the plugin for UE editor
 
 - Copy `DisableAsyncComputeOnMapLoad` folder below `Plugins` folder.
 - Launch UE editor again, open `LV_Exterior`.
 - Now UE editor won't crash.
 
-# How to use thie plugin from runtime
+# How to use the plugin from runtime
 
 Before start of map load:
 
@@ -67,6 +67,6 @@ PrivateDependencyModuleNames.Add("DisableAsyncComputeOnMapLoad");
 
 - `DisableAsyncCompute.DelayTimeToEnable`
 
-  Time(seconds) to enable async compute after `OnEndFrameRT`. Default is 5.0s.
+  Time(seconds) to enable AsyncCompute after `OnEndFrameRT`. Default is 5.0s.
 
 If UE editor still crashes, set it to larger value.
