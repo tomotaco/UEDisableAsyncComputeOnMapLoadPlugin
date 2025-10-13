@@ -1,6 +1,6 @@
 # UEDisableAsyncComputeOnMapLoadPlugin
 
-UE Plugin to disable AsyncCompute while editor map load, intended to avoid GPU Crash([UE-230827](https://issues.unrealengine.com/issue/UE-230827)) for UE5.5
+UE plugin to disable AsyncCompute while editor map load, intended to avoid GPU Crash([UE-230827](https://issues.unrealengine.com/issue/UE-230827)) for UE5.5.
 
 # How to reproduce GPU crash
 
@@ -22,9 +22,9 @@ UE Plugin to disable AsyncCompute while editor map load, intended to avoid GPU C
 
 - Launch UE editor and open `HillsideSampleProject.uproject`.
 - Create an empty level, and set it to EditorStartupMap in `Project settings` / `Maps & Modes`.
-- Exit UE Editor, and launch again.
+- Exit UE editor, and launch again.
 - Double-click at `Content/Hillside/Maps/LV_Exterior`.
-- Comfirm UE Editor crashes. (If not, you don't need this plugin)
+- Confirm UE editor crashes. (If not, you don't need this plugin)
 
 # How to use thie plugin for UE editor
 
