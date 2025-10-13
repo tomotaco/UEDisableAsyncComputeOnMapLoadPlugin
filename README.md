@@ -24,7 +24,7 @@ UE Plugin to disable AsyncCompute while editor map load, intended to avoid GPU C
 - Create an empty level, and set it to EditorStartupMap in `Project settings` / `Maps & Modes`.
 - Exit UE Editor, and launch again.
 - Double-click at `Content/Hillside/Maps/LV_Exterior`.
-- Comfirm UE Editor crashes. (If not, you don't need this plugin.)
+- Comfirm UE Editor crashes. (If not, you don't need this plugin)
 
 # How to use thie plugin for UE editor
 
