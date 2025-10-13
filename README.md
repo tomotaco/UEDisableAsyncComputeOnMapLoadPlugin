@@ -56,11 +56,11 @@ if (AsyncComputeSubsystem) {
 }
 ```
 
-Add dependency configuretion to your `*.Build.cs`
+Add dependency configuration to your `*.Build.cs`
 
 ```
-		PrivateIncludePathModuleNames.Add("DisableAsyncComputeOnMapLoad");
-        PrivateDependencyModuleNames.Add("DisableAsyncComputeOnMapLoad");
+PrivateIncludePathModuleNames.Add("DisableAsyncComputeOnMapLoad");
+PrivateDependencyModuleNames.Add("DisableAsyncComputeOnMapLoad");
 ```
 
 # Console variables
