@@ -1,0 +1,2 @@
+#include "AsyncComputeLogGroup.h"
+DISABLEASYNCCOMPUTEONMAPLOAD_API DEFINE_LOG_CATEGORY(LogAsyncComp);
