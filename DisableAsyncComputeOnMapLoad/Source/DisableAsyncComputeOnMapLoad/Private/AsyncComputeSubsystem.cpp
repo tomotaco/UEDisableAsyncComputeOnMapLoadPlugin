@@ -5,7 +5,7 @@
 
 static TAutoConsoleVariable<float> CVarDelayTimeEnableAsyncCompute(
 	TEXT("DisableAsyncCompute.DelayTimeToEnable"),
-	0.1f,
+	5.0f,
 	TEXT("Delay time to enable AsyncCompute of Lumen and RDG"),
 	ECVF_Scalability | ECVF_RenderThreadSafe);
 
@@ -66,12 +66,11 @@ void UAsyncComputeSubsystem::TriggerDelayedEnableAsyncCompute()
 	float DelayTime = CVarDelayTimeEnableAsyncCompute.GetValueOnGameThread();
 	UWorld* World = GetWorld();
 	auto Commands = ConsoleCommands;
-	auto TimerHandler = [DelayTime, World, Commands]() -> void
-		{
-			UE_LOG(LogAsyncComp, Log, TEXT("AsyncCompute enabled with delay time(%f)"), DelayTime);
-			for (auto ConsoleCommand : Commands) {
-				UKismetSystemLibrary::ExecuteConsoleCommand(World, ConsoleCommand + " 1");
-			}
+	auto TimerHandler = [DelayTime, World, Commands]() -> void {
+		UE_LOG(LogAsyncComp, Log, TEXT("AsyncCompute enabled with delay time(%f)"), DelayTime);
+		for (auto ConsoleCommand : Commands) {
+			UKismetSystemLibrary::ExecuteConsoleCommand(World, ConsoleCommand + " 1");
+		}
 		};
 
 #if WITH_EDITOR
