@@ -5,8 +5,8 @@
 
 
 /**
- * GPU非同期計算処理の状態管理クラス(Editor専用)
- * エディタ上でレベルロード中にGPUのAyncComputeを停止し、ロード完了後に元に戻す処理を行う
+ * EditorSubsystem to controll GPU AsyncCompute state.
+ * Disable AsyncCompute on level load at editor, and enable it after completed.
  */
 UCLASS()
 class DISABLEASYNCCOMPUTEONMAPLOADEDITOR_API UAsyncComputeEditorSubsystem : public UEditorSubsystem

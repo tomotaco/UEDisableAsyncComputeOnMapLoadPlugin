@@ -9,15 +9,59 @@ static TAutoConsoleVariable<float> CVarDelayTimeEnableAsyncCompute(
 	TEXT("Delay time to enable AsyncCompute of Lumen and RDG"),
 	ECVF_Scalability | ECVF_RenderThreadSafe);
 
-/**
- * WorldSubsystem to disable/enable AsyncCompute of Lumen and RDG.
- * See: https://forums.unrealengine.com/t/5-5-gpu-crash-device-hung-nodeandclustercull-recommended-action/2649934/2
- */
 UAsyncComputeSubsystem* UAsyncComputeSubsystem::GetInstance(UWorld* World)
 {
 	if (World == nullptr) return nullptr;
 	auto* Subsystem = World->GetSubsystem<UAsyncComputeSubsystem>();
 	return Subsystem;
+}
+
+
+void UAsyncComputeSubsystem::Initialize(FSubsystemCollectionBase& Collection)
+{
+	Super::Initialize(Collection);
+	DelegateHandlePreLoadMapWithContext = FCoreUObjectDelegates::PreLoadMapWithContext.AddUObject(this, &UAsyncComputeSubsystem::OnPreLoadMapWithContext);
+	DelegateHandlePostLoadMapWithWorld = FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UAsyncComputeSubsystem::OnPostLoadMapWithWorld);
+
+}
+
+void UAsyncComputeSubsystem::Deinitialize()
+{
+	if (TimerHandle.IsValid()) {
+		ClearTimer();
+	}
+
+	FCoreUObjectDelegates::PreLoadMapWithContext.Remove(DelegateHandlePreLoadMapWithContext);
+	FCoreUObjectDelegates::PreLoadMapWithContext.Remove(DelegateHandlePostLoadMapWithWorld);
+
+	Super::Deinitialize();
+}
+
+void UAsyncComputeSubsystem::SetTimer(FTimerDelegate TimerDelegate, float DelayTime)
+{
+#if WITH_EDITOR
+	if (GEditor->IsEditor()) {
+		GEditor->GetTimerManager()->SetTimer(TimerHandle, TimerDelegate, DelayTime, false);
+	}
+	else
+#endif
+	{
+		GetWorld()->GetTimerManager().SetTimer(TimerHandle, TimerDelegate, DelayTime, false);
+	}
+}
+
+void UAsyncComputeSubsystem::ClearTimer()
+{
+#if WITH_EDITOR
+	if (GEditor->IsEditor()) {
+		GEditor->GetTimerManager()->ClearTimer(TimerHandle);
+	}
+	else
+#endif
+	{
+		GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
+	}
+	TimerHandle.Invalidate();
 }
 
 void UAsyncComputeSubsystem::DisableAsyncCompute()
@@ -28,6 +72,11 @@ void UAsyncComputeSubsystem::DisableAsyncCompute()
 		UE_LOG(LogAsyncComp, Log, TEXT("AsyncCompute not changed"));
 		return;
 	}
+
+	if (TimerHandle.IsValid()) {
+		ClearTimer();
+	}
+
 	UE_LOG(LogAsyncComp, Log, TEXT("AsyncCompute disabled immediately"));
 	for (auto ConsoleCommand : ConsoleCommands) {
 		UKismetSystemLibrary::ExecuteConsoleCommand(GetWorld(), ConsoleCommand + " 0");
@@ -43,43 +92,36 @@ void UAsyncComputeSubsystem::EnableAsyncCompute()
 		return;
 	}
 
-	if (TimerHandle.IsValid()) {
-		TimerHandle.Invalidate();
-	}
-
+	UE_LOG(LogAsyncComp, Log, TEXT("Trigger enabling AsyncCompute"));
 	float DelayTime = CVarDelayTimeEnableAsyncCompute.GetValueOnGameThread();
-	if (FMath::IsNearlyZero(DelayTime)) {
-		UE_LOG(LogAsyncComp, Log, TEXT("AsyncCompute enabled immediately"));
-		UWorld* World = GetWorld();
-		for (auto ConsoleCommand : ConsoleCommands) {
-			UKismetSystemLibrary::ExecuteConsoleCommand(World, ConsoleCommand + " 1");
-		}
+	if (TimerHandle.IsValid()) {
+		ClearTimer();
 	}
-	else {
-		TriggerDelayedEnableAsyncCompute();
+	UWorld* World = GetWorld();
+	auto Commands = ConsoleCommands;
+	FTimerDelegate Delegate;
+	Delegate.BindUObject(this, &UAsyncComputeSubsystem::ExecConsoleCommand);
+	SetTimer(Delegate, DelayTime);
+}
+
+void UAsyncComputeSubsystem::ExecConsoleCommand()
+{
+	float DelayTime = CVarDelayTimeEnableAsyncCompute.GetValueOnGameThread();
+	UE_LOG(LogAsyncComp, Log, TEXT("AsyncCompute enabled with delay time(%f)"), DelayTime);
+	for (auto ConsoleCommand : ConsoleCommands) {
+		UKismetSystemLibrary::ExecuteConsoleCommand(GetWorld(), ConsoleCommand + " 1");
 	}
 }
 
-void UAsyncComputeSubsystem::TriggerDelayedEnableAsyncCompute()
+void UAsyncComputeSubsystem::OnPreLoadMapWithContext(const FWorldContext& WorldContext, const FString& MapName)
 {
-	UE_LOG(LogAsyncComp, Log, TEXT("Trigger enabling AsyncCompute"));
-	float DelayTime = CVarDelayTimeEnableAsyncCompute.GetValueOnGameThread();
-	UWorld* World = GetWorld();
-	auto Commands = ConsoleCommands;
-	auto TimerHandler = [DelayTime, World, Commands]() -> void {
-		UE_LOG(LogAsyncComp, Log, TEXT("AsyncCompute enabled with delay time(%f)"), DelayTime);
-		for (auto ConsoleCommand : Commands) {
-			UKismetSystemLibrary::ExecuteConsoleCommand(World, ConsoleCommand + " 1");
-		}
-		};
+	UE_LOG(LogAsyncComp, Log, TEXT("UAsyncComputeSubsystem::OnPreLoadMapWithContext(%s)"), *MapName);
+	DisableAsyncCompute();
 
-#if WITH_EDITOR
-	if (GEditor->IsEditor()) {
-		GEditor->GetTimerManager()->SetTimer(TimerHandle, TimerHandler, DelayTime, false);
-	}
-	else
-#endif
-	{
-		World->GetTimerManager().SetTimer(TimerHandle, TimerHandler, DelayTime, false);
-	}
+}
+
+void UAsyncComputeSubsystem::OnPostLoadMapWithWorld(UWorld* World)
+{
+	UE_LOG(LogAsyncComp, Log, TEXT("UAsyncComputeSubsystem::OnPostLoadMapWithWorld()"));
+	EnableAsyncCompute();
 }
